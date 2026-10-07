@@ -94,6 +94,77 @@
     <group>malware,</group>
   </rule>
 
+  <!-- 8. Threat intelligence (lists built by server/update-threat-intel.sh) -->
+  <!-- Attached to the base Sysmon network rule AND Wazuh's built-in event-3 rules (0810-sysmon_id_3.xml):
+       those claim PowerShell/script network events first, so a sibling-only rule never saw them -->
+  <rule id="100170" level="12">
+    <if_sid>61605, 92101, 92102, 92103, 92104, 92105, 92106, 92107, 92108, 92109, 92110</if_sid>
+    <list field="win.eventdata.destinationIp" lookup="match_key">etc/lists/homelab/bad-ips</list>
+    <description>Lab: connection to a known-malicious IP $(win.eventdata.destinationIp) by $(win.eventdata.image)</description>
+    <mitre><id>T1071</id></mitre>
+    <group>threat_intel,network,</group>
+  </rule>
+
+  <rule id="100171" level="12">
+    <if_group>sysmon_event_22</if_group>
+    <list field="win.eventdata.queryName" lookup="match_key">etc/lists/homelab/bad-domains</list>
+    <description>Lab: DNS lookup of a known malware-distribution domain $(win.eventdata.queryName)</description>
+    <mitre><id>T1071.004</id><id>T1189</id></mitre>
+    <group>threat_intel,dns,</group>
+  </rule>
+
+  <rule id="100172" level="13">
+    <if_sid>554, 550</if_sid>
+    <list field="sha256" lookup="match_key">etc/lists/homelab/bad-hashes</list>
+    <description>Lab: file matches a known malware hash (MalwareBazaar): $(file)</description>
+    <mitre><id>T1204.002</id></mitre>
+    <group>threat_intel,malware,</group>
+  </rule>
+
+  <!-- 9. Ransomware early warning -->
+  <rule id="100180" level="14" ignore="120">
+    <if_sid>554, 550</if_sid>
+    <field name="file" type="pcre2">(?i)(\\+(how_to|help_|readme|restore|decrypt)[^\\]*(decrypt|restore|files|recover)[^\\]*\.(txt|html?|hta)$|\.(locked|encrypted|crypt|crypted|enc|ransom)$)</field>
+    <description>Lab: possible ransomware: ransom note or encrypted-file extension appeared: $(file)</description>
+    <mitre><id>T1486</id></mitre>
+    <group>ransomware,</group>
+  </rule>
+
+  <rule id="100181" level="13" frequency="25" timeframe="60" ignore="300">
+    <if_matched_sid>554</if_matched_sid>
+    <description>Lab: possible ransomware: 25+ new files in watched folders within a minute</description>
+    <mitre><id>T1486</id></mitre>
+    <group>ransomware,</group>
+  </rule>
+
+  <rule id="100182" level="13" frequency="25" timeframe="60" ignore="300">
+    <if_matched_sid>550</if_matched_sid>
+    <description>Lab: possible ransomware: 25+ files modified in watched folders within a minute</description>
+    <mitre><id>T1486</id></mitre>
+    <group>ransomware,</group>
+  </rule>
+
+  <!-- 10. Weekly full scan summary (written by malware-defense/fullscan.ps1) -->
+  <rule id="100190" level="3">
+    <match>homelab-av: FULLSCAN</match>
+    <description>Lab: weekly full scan finished</description>
+    <group>malware,fullscan,</group>
+  </rule>
+
+  <rule id="100191" level="10">
+    <if_sid>100190</if_sid>
+    <regex type="pcre2">threats=[1-9]</regex>
+    <description>Lab: weekly full scan found and quarantined threats</description>
+    <group>malware,fullscan,</group>
+  </rule>
+
+  <!-- 11. Firewall block placed by the lab (homelab-block-ip active response) -->
+  <rule id="100192" level="10">
+    <match>homelab-block: BLOCKED</match>
+    <description>Lab: firewall blocked a malicious IP</description>
+    <group>threat_intel,active_response,</group>
+  </rule>
+
   <!--
     7. Tuning from alert triage (2026-10-06). Each rule is narrow on purpose: it matches the exact benign
        pattern that was investigated and verified, so the parent rule still fires for anything else.

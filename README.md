@@ -5,7 +5,7 @@
 <p align="center">
   <img alt="Wazuh 4.14" src="https://img.shields.io/badge/wazuh-4.14-b6abff?style=flat-square&labelColor=0e0f11">
   <img alt="Windows 11 + WSL2" src="https://img.shields.io/badge/endpoint-windows%2011%20%2B%20wsl2-00cbaa?style=flat-square&labelColor=0e0f11">
-  <img alt="MITRE ATT&CK mapped" src="https://img.shields.io/badge/MITRE%20ATT%26CK-9%20techniques-eef35f?style=flat-square&labelColor=0e0f11">
+  <img alt="MITRE ATT&CK mapped" src="https://img.shields.io/badge/MITRE%20ATT%26CK-mapped-eef35f?style=flat-square&labelColor=0e0f11">
   <img alt="YARA + VirusTotal" src="https://img.shields.io/badge/malware-YARA%20%2B%20VirusTotal-eef35f?style=flat-square&labelColor=0e0f11">
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-cfcfd3?style=flat-square&labelColor=0e0f11"></a>
 </p>
@@ -52,7 +52,23 @@ $ restore-quarantine.ps1 -Id 076eebb52a50
 Restored c:\users\<you>\downloads\homelab-yara-test.txt
 ```
 
+## Protection features (tested end to end)
+
+| Feature | How it works | Result in testing |
+|---|---|---|
+| Real-time malware quarantine | FIM → YARA Forge + VirusTotal → locked quarantine + restore script | lab test file quarantined in ~2 s |
+| Known-malware hashes | 1,500 fresh SHA-256s from MalwareBazaar, refreshed daily | quarantined on match (rule 100172) |
+| Firewall auto-block | 17,700 bad IPs (Feodo Tracker + IPsum) and 400 malware domains (URLhaus); a hit adds inbound + outbound Windows Firewall blocks | connection detected and blocked in ~6 s, then unblocked |
+| Ransomware early warning | ransom-note names and encrypted extensions (level 14), 25+ new or changed files a minute (level 13) | 31-file simulation flagged instantly |
+| Weekly full scan | Wazuh agent command module runs YARA over Downloads, Desktop and Documents every week | summary alert per scan |
+| Pop-up notifications | SYSTEM-side scripts write an event feed; a small user-session helper turns it into Windows notifications | "Home SOC quarantined a threat" pop-up |
+
+Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `malware-defense/unblock-ip.ps1` lists and removes blocks.
+
 ## What I learned
+
+- **Rule order matters.** My bad-IP rule never fired at first: Wazuh's built-in "PowerShell communicating over TCP" rule claims those network events before a sibling rule sees them. Attaching the rule to the built-in event-3 rules fixed it, and the IP block test passed.
+- **Know the field names.** FIM events are matched on `file` and `sha256`, not `syscheck.path`; my first ransomware rule silently never matched.
 
 - **Real findings on day one.** The new-service rule flagged two real installs on my PC (an app update and an antivirus task). Both were legitimate, which is the everyday SOC job: check, confirm, document.
 - **Day-one triage: 300+ alerts, zero attacks.** I went through every alert of level 7 or higher. 223 came from one file: PowerShell writes a `__PSScriptPolicyTest_*` script to Temp on every start (an app-control check), and Wazuh's malware-folder rules scored it as high as level 15. Others were Opera's signed updater, Windows services whose parent Sysmon didn't record, and Wazuh's own CIS scan running `net accounts`. Each got a narrow tuning rule (`100142`, `100160`-`100164`) that matches only the verified benign pattern, so the original rule still fires for anything else. Encoded PowerShell stays alerting on purpose: my AI agent uses it, and so do attackers.
