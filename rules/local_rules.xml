@@ -57,6 +57,8 @@
     <!-- Tuned 2026-10-06: net.exe only counts for account/group/share lookups, not "net start/stop" (Windows does that constantly). -->
     <field name="win.eventdata.image" type="pcre2">(?i)\b(whoami|systeminfo|net1?|nltest|quser)\.exe$</field>
     <field name="win.eventdata.commandLine" type="pcre2">(?i)(whoami|systeminfo|nltest|quser|\bnet1?(\.exe)?"?\s+(user|group|localgroup|accounts|share|view|session)\b)</field>
+    <!-- Tuned 2026-10-06 (triage): Wazuh's own CIS scan runs "net accounts" and similar checks -->
+    <field name="win.eventdata.parentImage" type="pcre2" negate="yes">(?i)\\+ossec-agent\\+wazuh-agent\.exe$</field>
     <description>Lab: discovery command run: $(win.eventdata.commandLine)</description>
     <mitre><id>T1033</id><id>T1087.001</id><id>T1082</id></mitre>
     <group>discovery,</group>
@@ -68,6 +70,14 @@
     <description>Lab: burst of discovery commands (3+ in 1 minute), possible hands-on-keyboard attacker</description>
     <mitre><id>T1033</id><id>T1087.001</id><id>T1082</id></mitre>
     <group>discovery,</group>
+  </rule>
+
+  <!-- 5c. Tuned 2026-10-06 (triage): "net user" starts net1.exe, so one command counted twice toward the burst -->
+  <rule id="100142" level="0">
+    <if_sid>100140</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\+net1\.exe$</field>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)\\+net\.exe$</field>
+    <description>Lab: net1.exe child of net.exe (already counted)</description>
   </rule>
 
   <!-- 6. Malware defense: the YARA/VirusTotal scanner quarantined a file (agent active-response log) -->
@@ -82,6 +92,55 @@
     <match>homelab-av: ERROR</match>
     <description>Lab: file scanner error</description>
     <group>malware,</group>
+  </rule>
+
+  <!--
+    7. Tuning from alert triage (2026-10-06). Each rule is narrow on purpose: it matches the exact benign
+       pattern that was investigated and verified, so the parent rule still fires for anything else.
+  -->
+
+  <!-- PowerShell writes __PSScriptPolicyTest_*.ps1/.psm1 to Temp on every start (AppLocker/WDAC policy check).
+       223 alerts in one day (rules 92213 level 15, 92205 level 9), all from this one file name. -->
+  <rule id="100160" level="0">
+    <if_sid>92213, 92205</if_sid>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)\\+__PSScriptPolicyTest_[a-z0-9]+\.[a-z0-9]+\.ps(1|m1)$</field>
+    <description>Lab tuning: PowerShell policy-test file (benign, created on every PowerShell start)</description>
+    <group>tuning,</group>
+  </rule>
+
+  <!-- Opera's signed auto-updater unpacks installers in Temp. Kept visible at low level instead of level 15. -->
+  <rule id="100161" level="3">
+    <if_sid>92213</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\+Opera\\+autoupdate\\+opera_autoupdate\.exe$</field>
+    <field name="win.eventdata.targetFilename" type="pcre2">(?i)\\+Temp\\+\.opera\\+[0-9A-F]+\\+[a-z_]*installer\.exe$</field>
+    <description>Lab tuning: Opera auto-updater dropped its installer in Temp (verified signed by Opera Norway AS)</description>
+    <group>tuning,</group>
+  </rule>
+
+  <!-- Built-in "suspicious host process" rules fire when Sysmon has no parent for a genuine Windows host process.
+       Only downgraded when the binary is the real one in System32 and the command line is the normal service form. -->
+  <rule id="100162" level="3">
+    <if_sid>61618</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)^C:\\+Windows\\+System32\\+svchost\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)svchost\.exe"? -k [a-z]+ -p -s [a-z0-9]+$</field>
+    <description>Lab tuning: svchost.exe hosting a named service from System32 (parent not recorded)</description>
+    <group>tuning,</group>
+  </rule>
+
+  <rule id="100163" level="3">
+    <if_sid>61634, 61638</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)^C:\\+Windows\\+System32\\+(backgroundTaskHost|dllhost)\.exe$</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(-ServerName:[A-Za-z0-9._]+$|/Processid:\{[0-9A-F-]{36}\}$)</field>
+    <description>Lab tuning: Windows background task / COM host from System32 (parent not recorded)</description>
+    <group>tuning,</group>
+  </rule>
+
+  <!-- sdbinst.exe started by the Program Compatibility Assistant service (PcaSvc) is normal Windows behavior -->
+  <rule id="100164" level="3">
+    <if_sid>92058</if_sid>
+    <field name="win.eventdata.parentCommandLine" type="pcre2">(?i)svchost\.exe -k LocalSystemNetworkRestricted -p -s PcaSvc$</field>
+    <description>Lab tuning: Application Compatibility Database installed by PcaSvc</description>
+    <group>tuning,</group>
   </rule>
 
 </group>

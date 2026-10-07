@@ -55,6 +55,7 @@ Restored c:\users\<you>\downloads\homelab-yara-test.txt
 ## What I learned
 
 - **Real findings on day one.** The new-service rule flagged two real installs on my PC (an app update and an antivirus task). Both were legitimate, which is the everyday SOC job: check, confirm, document.
+- **Day-one triage: 300+ alerts, zero attacks.** I went through every alert of level 7 or higher. 223 came from one file: PowerShell writes a `__PSScriptPolicyTest_*` script to Temp on every start (an app-control check), and Wazuh's malware-folder rules scored it as high as level 15. Others were Opera's signed updater, Windows services whose parent Sysmon didn't record, and Wazuh's own CIS scan running `net accounts`. Each got a narrow tuning rule (`100142`, `100160`-`100164`) that matches only the verified benign pattern, so the original rule still fires for anything else. Encoded PowerShell stays alerting on purpose: my AI agent uses it, and so do attackers.
 - **Tuning false positives.** My first PowerShell rule also matched `-ExecutionPolicy Bypass`, which normal tools use constantly: 10 alerts in a few minutes, none malicious. My first recon rule counted every `net start`. I narrowed both.
 - **Know the built-in rules.** Wazuh's own rule 92057 catches encoded PowerShell first, so my rule became a backstop for download cradles instead of a duplicate.
 - **Test the test.** My first brute-force test used a loopback `net use` login. It failed every time, but Windows never logged it as Event 4625, so the rule looked broken. A local logon attempt produced the events.
