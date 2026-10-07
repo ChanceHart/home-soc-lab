@@ -1,0 +1,14 @@
+html,body{margin:0;overflow:hidden}
+body{background:#000;color:#cfcfd3;font-family:"Manrope",system-ui,sans-serif;position:relative;-webkit-font-smoothing:antialiased}
+.dots{position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1px);background-size:26px 26px;-webkit-mask-image:radial-gradient(ellipse at 70% 40%,#000 0%,transparent 75%)}
+.glow{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(182,171,255,.22),transparent 72%)}
+.pill{display:inline-flex;align-items:center;gap:10px;font-weight:500;color:#b6abff;border:1px solid #303438;background:#0e0f11;border-radius:50px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.pill i{border-radius:50%;background:#00cbaa;box-shadow:0 0 0 5px rgba(0,203,170,.16)}
+h1{font-weight:300;color:#fff;letter-spacing:-.02em;margin:0}
+h1 em{font-style:normal;color:#eef35f}
+.term{background:#0e0f11;border:1px solid #303438;border-radius:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06),0 30px 80px -30px rgba(182,171,255,.25);font-family:"JetBrains Mono",monospace;color:#cfcfd3;overflow:hidden}
+.bar{display:flex;align-items:center;gap:8px;border-bottom:1px solid #303438;color:#85868f}
+.bar b{border-radius:50%;background:#303438}
+.bar .live{margin-left:auto;color:#00cbaa}
+.p{color:#00cbaa}.s{color:#eef35f}.k{color:#b6abff}.d{color:#85868f}
+.caret{display:inline-block;background:#eef35f;vertical-align:-2px}

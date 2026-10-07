@@ -1,0 +1,10 @@
+# Copy to %UserProfile%\.wslconfig, then run: wsl --shutdown
+[wsl2]
+memory=6GB
+processors=4
+kernelCommandLine = sysctl.vm.max_map_count=262144
+# Keep the lab running while Windows is on
+vmIdleTimeout=-1
+
+[general]
+instanceIdleTimeout=-1

@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="common.css">
+<style>
+html,body{width:1280px;height:440px}
+.glow{left:-260px;top:-300px;width:900px;height:900px}
+.copy{position:absolute;left:64px;top:70px;width:520px}
+.pill{font-size:14px;padding:8px 14px}.pill i{width:8px;height:8px}
+h1{font-size:50px;line-height:1.05;margin:22px 0 22px}
+.stats{display:flex;gap:30px;font:400 14px "JetBrains Mono",monospace;color:#85868f}
+.stats b{display:block;font:500 28px Manrope;color:#fff;letter-spacing:-.01em}
+.term{position:absolute;right:56px;top:52px;width:600px;font-size:13.5px;line-height:1.55}
+.bar{padding:11px 16px;font-size:12px}.bar b{width:10px;height:10px}
+.feed{padding:6px 0 8px}
+.row{display:grid;grid-template-columns:62px 40px 1fr;align-items:center;gap:12px;padding:7px 18px;border-bottom:1px solid #1a1c20}
+.row:last-child{border-bottom:0}
+.t{color:#85868f}
+.lv{font-weight:500;text-align:center;border-radius:6px;padding:1px 0;font-size:12.5px}
+.l12{background:rgba(238,243,95,.14);color:#eef35f}.l10{background:rgba(182,171,255,.16);color:#b6abff}
+.m{color:#85868f;font-size:12px}
+.desc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e6e6ea}
+</style></head><body><div class="dots"></div><div class="glow"></div>
+<div class="copy">
+ <span class="pill"><i></i>Home SOC lab &middot; Wazuh &middot; Windows 11</span>
+ <h1>A security operations center, <em>built at home</em>.</h1>
+ <div class="stats"><div><b>9</b>detections</div><div><b>~4s</b>to quarantine</div><div><b>0</b>default passwords</div></div>
+</div>
+<div class="term"><div class="bar"><b></b><b></b><b></b><span style="margin-left:6px">wazuh &middot; threat hunting &middot; agent lab-windows</span><span class="live">&#9679; live</span></div>
+<div class="feed">
+ <div class="row"><span class="t">22:14:31</span><span class="lv l12">12</span><span class="desc">Malicious file quarantined <span class="m">&middot; YARA &middot; T1204.002</span></span></div>
+ <div class="row"><span class="t">21:52:08</span><span class="lv l12">12</span><span class="desc">Account added to local Administrators <span class="m">&middot; T1098</span></span></div>
+ <div class="row"><span class="t">21:51:40</span><span class="lv l10">10</span><span class="desc">Brute force: 5+ failed logons in 2 min <span class="m">&middot; T1110</span></span></div>
+ <div class="row"><span class="t">21:16:02</span><span class="lv l12">12</span><span class="desc">PowerShell ran a base64-encoded command <span class="m">&middot; T1059.001</span></span></div>
+ <div class="row"><span class="t">21:15:57</span><span class="lv l10">10</span><span class="desc">Burst of discovery commands <span class="m">&middot; T1033 &middot; T1087</span></span></div>
+ <div class="row"><span class="t">21:15:55</span><span class="lv l10">10</span><span class="desc">Scheduled task created with schtasks <span class="m">&middot; T1053.005</span></span></div>
+ <div class="row"><span class="t">21:09:13</span><span class="lv l10">10</span><span class="desc">New Windows service installed <span class="m">&middot; T1543.003</span></span></div>
+</div></div>
+</body></html>

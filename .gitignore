@@ -1,0 +1,6 @@
+# local run logs and secrets never belong in the repo
+*-log.txt
+*.log
+*.key
+lab-credentials.txt
+*.yarc
