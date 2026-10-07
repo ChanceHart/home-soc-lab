@@ -94,11 +94,29 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 | 7. Malware defense | PowerShell (admin) | `malware-defense\install-malware-defense.ps1`, then `bash server/enable-malware-defense.sh` |
 | 8. VirusTotal (optional) | PowerShell | `windows\save-virustotal-key.ps1`, then rerun `server/enable-malware-defense.sh` |
 | 9. Prove it | PowerShell | scripts in `tests\` and `malware-defense\test-quarantine-loop.ps1`; watch https://localhost |
+| 10. One-click open | PowerShell | `windows\install-shortcut.ps1` (no admin) |
+
+### Open the lab any time
+
+`windows\install-shortcut.ps1` adds a **Home SOC Lab** shortcut to the Desktop and Start menu. Double-click it and it:
+
+1. wakes the lab (starts WSL and Docker; the Wazuh containers restart on their own),
+2. waits until the dashboard answers,
+3. opens it in your browser and copies the admin password to the clipboard for 45 seconds (then clears it).
+
+| Your setup | Command |
+|---|---|
+| Local lab in WSL (default) | `windows\install-shortcut.ps1` |
+| Different WSL distro | `windows\install-shortcut.ps1 -Distro Ubuntu-22.04` |
+| Cloud/remote lab over Tailscale | `windows\install-shortcut.ps1 -Remote -Url https://<server>.<tailnet>.ts.net -Name "Home SOC Lab (cloud)"` |
+| Linux / macOS | `server/open-homelab.sh` (or `URL=https://<server>.<tailnet>.ts.net server/open-homelab.sh`) |
+
+On a phone, install Tailscale and bookmark the `https://<server>.<tailnet>.ts.net` address (served by `tailscale serve`, reachable only from your own devices).
 
 ```text
 rules/             custom Wazuh rules (local_rules.xml)
 server/            Docker + Wazuh setup, password hardening, rule loading, malware-defense config
-windows/           agent install, built-in Sysmon, VirusTotal key helper
+windows/           agent install, built-in Sysmon, VirusTotal key helper, one-click open shortcut
 malware-defense/   homelab-av scanner, installer, quarantine restore, end-to-end test
 tests/             safe attack simulations, one per detection
 assets/            banner and diagram (HTML sources in assets/source)
