@@ -2,36 +2,47 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="common.css">
 <style>
-html,body{width:1280px;height:600px}
+html,body{width:1280px;height:610px}
 .glow{right:-300px;bottom:-400px;width:900px;height:900px}
-h2{position:absolute;left:56px;top:30px;margin:0;font:300 30px Manrope;color:#fff;letter-spacing:-.01em}
+h2{position:absolute;left:56px;top:34px;margin:0;font:300 40px Manrope;color:#fff;letter-spacing:-.01em}
 h2 em{font-style:normal;color:#eef35f}
-.zone{position:absolute;border:1px dashed #303438;border-radius:18px}
-.zone>span{position:absolute;top:-11px;left:18px;background:#000;padding:0 8px;font:500 12px "JetBrains Mono",monospace;color:#85868f;letter-spacing:.06em;text-transform:uppercase}
-.box{position:absolute;background:#0e0f11;border:1px solid #303438;border-radius:12px;padding:12px 16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
-.box b{display:block;color:#fff;font:500 16px Manrope;margin-bottom:3px}
-.box small{font:400 12.5px "JetBrains Mono",monospace;color:#85868f;line-height:1.5;display:block}
-.v{border-color:rgba(182,171,255,.5)}.tl{border-color:rgba(0,203,170,.5)}.lm{border-color:rgba(238,243,95,.5)}
+.col{position:absolute;top:120px;width:360px}
+.lab{font:500 15px "JetBrains Mono",monospace;color:#9a9ba3;letter-spacing:.08em;text-transform:uppercase;margin:0 0 14px 4px}
+.box{background:#0e0f11;border:1.5px solid #303438;border-radius:14px;padding:16px 20px;margin-bottom:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+.box b{display:block;color:#fff;font:600 22px Manrope;margin-bottom:4px}
+.box small{display:block;font:400 17px Manrope;color:#b3b4bb;line-height:1.35}
+.tl{border-color:rgba(0,203,170,.6)}.v{border-color:rgba(182,171,255,.6)}.lm{border-color:rgba(238,243,95,.6)}
+.n{display:inline-block;width:30px;height:30px;border-radius:50%;background:#eef35f;color:#000;font:700 17px Manrope;text-align:center;line-height:30px;margin-right:10px;vertical-align:2px}
 svg{position:absolute;inset:0}
-.lbl{font:400 12px "JetBrains Mono",monospace;fill:#85868f}
 </style></head><body><div class="dots"></div><div class="glow"></div>
 <h2>How the lab <em>sees, decides and acts</em></h2>
-<div class="zone" style="left:40px;top:96px;width:470px;height:478px"><span>Windows 11 endpoint</span></div>
-<div class="zone" style="left:640px;top:96px;width:600px;height:300px"><span>Ubuntu on WSL2 &middot; Docker</span></div>
-<div class="box tl" style="left:70px;top:126px;width:376px"><b>Sysmon (built into 25H2)</b><small>process starts &middot; network &middot; file creates</small></div>
-<div class="box tl" style="left:70px;top:218px;width:376px"><b>Windows event logs</b><small>Security 4625/4732 &middot; System 7045 &middot; PowerShell</small></div>
-<div class="box tl" style="left:70px;top:310px;width:376px"><b>Real-time file watch</b><small>Downloads &middot; Desktop &middot; Documents &middot; Temp</small></div>
-<div class="box v" style="left:70px;top:440px;width:376px"><b>Wazuh agent</b><small>ships events &middot; runs homelab-av on command</small></div>
-<div class="box v" style="left:670px;top:126px;width:236px"><b>Wazuh manager</b><small>9 custom rules<br>mapped to MITRE ATT&amp;CK</small></div>
-<div class="box" style="left:960px;top:126px;width:236px"><b>Indexer + dashboard</b><small>search &middot; alerts<br>https://localhost</small></div>
-<div class="box lm" style="left:670px;top:276px;width:526px"><b>VirusTotal integration</b><small>file hash checked against ~70 antivirus engines</small></div>
-<div class="box lm" style="left:640px;top:458px;width:568px"><b>homelab-av: scan &rarr; quarantine &rarr; alert</b><small>YARA Forge rules (offline) + VirusTotal verdicts<br>locked quarantine &middot; restore script &middot; level-12 alert</small></div>
-<svg viewBox="0 0 1280 600"><defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b6abff"/></marker><marker id="b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#eef35f"/></marker><marker id="c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#00cbaa"/></marker></defs>
-<path d="M258 396 V434" stroke="#00cbaa" stroke-width="2" marker-end="url(#c)"/>
-<path d="M480 480 C 570 480, 570 166, 664 166" stroke="#b6abff" stroke-width="2" fill="none" marker-end="url(#a)"/><text x="588" y="336" class="lbl">1514/tcp</text>
-<path d="M926 166 H954" stroke="#b6abff" stroke-width="2" marker-end="url(#a)"/>
-<path d="M790 210 V270" stroke="#eef35f" stroke-width="2" marker-end="url(#b)"/>
-<path d="M930 340 V452" stroke="#eef35f" stroke-width="2" marker-end="url(#b)"/><text x="942" y="430" class="lbl">verdict</text>
-<path d="M634 520 H486" stroke="#eef35f" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#b)"/><text x="506" y="546" class="lbl">active response</text>
+
+<div class="col" style="left:48px">
+ <div class="lab">1 &middot; Sees (my laptop)</div>
+ <div class="box tl"><b>Sysmon</b><small>every program started and every connection made</small></div>
+ <div class="box tl"><b>Windows logs</b><small>logins, new admins, new services</small></div>
+ <div class="box tl"><b>File watch</b><small>Downloads, Desktop, Documents, Temp</small></div>
+</div>
+
+<div class="col" style="left:460px">
+ <div class="lab">2 &middot; Decides (Wazuh server)</div>
+ <div class="box v"><b>Wazuh detections</b><small>custom rules, mapped to MITRE ATT&amp;CK</small></div>
+ <div class="box lm"><b>Threat intel</b><small>17k bad IPs &middot; malware sites &middot; malware hashes</small></div>
+ <div class="box lm"><b>YARA + VirusTotal</b><small>3,000 malware rules &middot; 66 antivirus engines</small></div>
+</div>
+
+<div class="col" style="left:872px">
+ <div class="lab">3 &middot; Acts (automatically)</div>
+ <div class="box lm"><b>Quarantine</b><small>bad file locked away in ~2 s, restorable</small></div>
+ <div class="box lm"><b>Firewall block</b><small>malicious IP blocked in ~6 s</small></div>
+ <div class="box lm"><b>Alert + pop-up</b><small>dashboard alert and a Windows notification</small></div>
+</div>
+
+<svg viewBox="0 0 1280 610"><defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b6abff"/></marker></defs>
+<path d="M414 330 H452" stroke="#b6abff" stroke-width="3" marker-end="url(#a)"/>
+<path d="M826 330 H864" stroke="#b6abff" stroke-width="3" marker-end="url(#a)"/>
 </svg>
+<div style="position:absolute;left:48px;right:48px;bottom:30px;border-top:1px solid #303438;padding-top:18px;font:400 18px Manrope;color:#9a9ba3">
+ Runs on one Windows 11 laptop &middot; Wazuh in Docker on WSL2 &middot; dashboard reachable only from my own devices
+</div>
 </body></html>
