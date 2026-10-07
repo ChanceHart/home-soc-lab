@@ -113,6 +113,16 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 
 On a phone, install Tailscale and bookmark the `https://<server>.<tailnet>.ts.net` address (served by `tailscale serve`, reachable only from your own devices).
 
+### Secure remote access + personal VPN (Tailscale)
+
+No ports are opened to the internet. Everything rides on Tailscale (WireGuard):
+
+| Goal | How | Result |
+|---|---|---|
+| Dashboard from phone/laptop anywhere | `tailscale serve --bg https+insecure://localhost:443` on the lab machine | `https://<lab>.<tailnet>.ts.net` with a real, trusted certificate; only your devices can reach it |
+| Personal VPN on public Wi-Fi | `tailscale set --advertise-exit-node` on the lab machine, approve it in the admin console, pick it as **Exit node** on the phone | All phone traffic leaves through the lab |
+| Nothing exposed publicly | Wazuh admin ports bound to `127.0.0.1`; dashboard reached only through Tailscale | Smaller attack surface |
+
 ```text
 rules/             custom Wazuh rules (local_rules.xml)
 server/            Docker + Wazuh setup, password hardening, rule loading, malware-defense config
