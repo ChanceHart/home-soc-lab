@@ -1,0 +1,25 @@
+// Tailscale access policy for the Home SOC Lab (admin console > Access controls > JSON editor).
+// Replace the three IPs with yours (tailscale status). The tests at the bottom are checked when you save:
+// if a rule would let the lab server reach your devices, Tailscale refuses to save it.
+{
+  "hosts": {
+    "laptop":     "100.x.y.z",   // the monitored PC
+    "phone":      "100.x.y.z",
+    "lab-server": "100.x.y.z",   // the cloud Wazuh server
+  },
+
+  "acls": [
+    // Your own devices can reach everything: the lab dashboard, SSH, agent ports, each other.
+    {"action": "accept", "src": ["laptop", "phone"], "dst": ["*:*"]},
+    // ...and use any exit node (personal VPN).
+    {"action": "accept", "src": ["laptop", "phone"], "dst": ["autogroup:internet:*"]},
+    // Nothing for "lab-server": it can answer your connections but never start one to your devices.
+    // If it is ever compromised, the attacker cannot pivot to the laptop's file sharing or remote management.
+  ],
+
+  "tests": [
+    {"src": "lab-server", "deny":   ["laptop:445", "laptop:135", "laptop:3389", "phone:443"]},
+    {"src": "laptop",     "accept": ["lab-server:22", "lab-server:443", "lab-server:1514", "lab-server:1515"]},
+    {"src": "phone",      "accept": ["lab-server:443"]},
+  ],
+}

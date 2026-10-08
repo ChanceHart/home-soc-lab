@@ -33,6 +33,9 @@ cat > /usr/local/sbin/homelab-docker-guard.sh <<'EOF'
 IF=$(ip -o route get 1.1.1.1 | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}')
 iptables -C DOCKER-USER -i "$IF" -m conntrack --ctstate NEW -j DROP 2>/dev/null \
   || iptables -I DOCKER-USER 1 -i "$IF" -m conntrack --ctstate NEW -j DROP
+# Containers never need the cloud instance-metadata service (a classic credential-theft path)
+iptables -C DOCKER-USER -d 169.254.169.254 -p tcp -m multiport --dports 80,443 -j DROP 2>/dev/null \
+  || iptables -I DOCKER-USER 1 -d 169.254.169.254 -p tcp -m multiport --dports 80,443 -j DROP
 EOF
 chmod 755 /usr/local/sbin/homelab-docker-guard.sh
 cat > /etc/systemd/system/homelab-docker-guard.service <<'EOF'
@@ -55,6 +58,9 @@ systemctl daemon-reload && systemctl enable --now homelab-docker-guard.service
 # 4. Replace both vendor default passwords (scripts restart the stack with the new compose settings)
 bash "$REPO/server/change-admin-password.sh"
 bash "$REPO/server/change-api-password.sh"
+# Files holding secrets: root only, and no stale copies lying around
+rm -f docker-compose.yml.bak docker-compose.yml.bak-api config/wazuh_indexer/internal_users.yml.bak
+chmod 600 docker-compose.yml config/wazuh_cluster/wazuh_manager.conf
 
 # 5. Agent enrollment needs a password (only devices we enroll can join, even inside the tailnet)
 if ! grep -q 'Enrollment password' /root/lab-credentials.txt; then

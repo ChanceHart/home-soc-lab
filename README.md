@@ -83,6 +83,24 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 
 ## Run it yourself
 
+**Pick one setup:**
+
+| | A. One Windows PC | B. Always-on cloud server (what I run) |
+|---|---|---|
+| Cost | $0 | $0 (Oracle Cloud Always Free) |
+| Keeps watching when the PC is off | No | Yes |
+| Open to the internet | Nothing (localhost only) | Nothing (Tailscale only, zero public ports) |
+| Phone access / personal VPN | While the PC is on | Always |
+
+**Before you start (safety):**
+
+- Only run this on computers you own. Everything in `tests\` is a harmless simulation (made-up logons, a text file with a test marker, a temporary *disabled* user).
+- Read a script before running it as Administrator/root; each one explains itself in its first lines. Downloads come only from official sources (Wazuh, Docker, Tailscale, Microsoft), and the Wazuh agent installer's signature is checked.
+- Passwords are generated for you and saved only on the server in `/root/lab-credentials.txt` (root-only). Nothing secret is ever written to the repo; `.gitignore` blocks logs and key files.
+- Get the code: `git clone https://github.com/ChanceHart/home-soc-lab.git`
+
+### A. One Windows PC (Wazuh in WSL)
+
 | Step | Where | Command |
 |---|---|---|
 | 1. WSL2 + Ubuntu | PowerShell (admin) | `wsl --install -d Ubuntu-24.04`, restart, copy `wslconfig.example` to `%UserProfile%\.wslconfig`, `wsl --shutdown` |
@@ -96,19 +114,22 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 | 9. Prove it | PowerShell | scripts in `tests\` and `malware-defense\test-quarantine-loop.ps1`; watch https://localhost |
 | 10. One-click open | PowerShell | `windows\install-shortcut.ps1` (no admin) |
 
-### Always-on cloud version (Oracle Cloud Always Free, $0)
+### B. Always-on cloud server (Oracle Cloud Always Free + Tailscale)
 
-The same lab runs 24/7 on an Oracle Cloud Ampere A1 VM (4 Arm CPUs, 24 GB RAM). The Windows PC stays the monitored endpoint and talks to the server only over Tailscale.
+The Wazuh server runs 24/7 on an Oracle Cloud Ampere A1 VM (4 Arm CPUs, 24 GB RAM). The Windows PC is the monitored endpoint and reaches the server only over Tailscale.
 
 | Step | Where | Command |
 |---|---|---|
-| 1. VM + network (retries until Oracle has capacity) | PC with `~/.oci/config` | `python cloud/launch_vm.py --fallback-after 1` (see the script header) |
-| 2. Base: patches, auto-updates, Tailscale, firewall | VM (root) | `bash cloud/01-base.sh`, then `tailscale up --advertise-exit-node --hostname=home-lab-cloud` |
-| 3. Hardened Wazuh + rules, threat intel, VirusTotal, local agent | VM (root, repo root) | `bash cloud/02-wazuh.sh` |
-| 4. Close public SSH | Oracle security list | remove the port 22 rule (SSH keeps working over Tailscale) |
-| 5. Move the Windows agent | PowerShell (admin) | `cloud\03-move-agent.ps1 -Manager <VM Tailscale IP>` |
+| 1. Accounts | browser | Oracle Cloud Free Tier (Pay As You Go upgrade gets capacity much faster and still costs $0 inside the free limits; set a $1 budget alert), Tailscale (free) |
+| 2. VM + network | your PC, with an [OCI API key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm) in `~/.oci/config` | `python cloud/launch_vm.py --fallback-after 1` (retries until Oracle has capacity; never launches twice) |
+| 3. Base setup | VM, as root | `bash cloud/01-base.sh`, then `tailscale up --advertise-exit-node --hostname=home-lab-cloud` |
+| 4. Hardened Wazuh | VM, as root, from the repo folder | put your VirusTotal key in `/root/virustotal.key` (optional), then `bash cloud/02-wazuh.sh` |
+| 5. Lock down SSH | VM, as root, **logged in over Tailscale** | `bash cloud/04-lockdown.sh`, then delete the port 22 rule in the Oracle security list |
+| 6. Tailscale access rules | Tailscale admin console | paste `cloud/tailscale-policy.example.hujson` (with your IPs): the server can never start connections to your devices |
+| 7. Windows endpoint | PowerShell (admin) | steps 5-8 of setup A with `install-agent.ps1 -Manager <server Tailscale IP>`, then `cloud\03-move-agent.ps1 -Manager <server Tailscale IP>` (asks for the enrollment password) |
+| 8. Prove it + one-click open | PowerShell | step 9 of setup A, then `windows\install-shortcut.ps1 -Remote -Url https://<server>.<tailnet>.ts.net` |
 
-Hardening built in: **no ports open to the internet**; dashboard, API and indexer bound to `127.0.0.1` (dashboard reached via `tailscale serve`); a `DOCKER-USER` rule stops Docker from publishing agent ports on the public NIC; agent enrollment password; random admin/API passwords; unattended security updates; Oracle's idle-reclaim rule avoided (indexer heap sized to keep memory use above 20%).
+**Hardening built in (pen-tested 2026-10-07):** zero ports open to the internet (full 65,535-port scan); dashboard, API and indexer bound to `127.0.0.1` (dashboard only via `tailscale serve`); a `DOCKER-USER` rule keeps Docker from publishing ports on the public network card and blocks containers from the cloud metadata service; agent enrollment password (rogue enrollment refused); random admin/API passwords; SSH keys-only, no root, no forwarding, Tailscale-only; config files with secrets root-only; unattended security updates; the server can't open connections to your devices (Tailscale policy); Oracle's idle-reclaim rule avoided (indexer heap keeps memory above 20%). Survives a reboot with everything coming back on its own.
 
 ### Open the lab any time
 
@@ -139,6 +160,7 @@ No ports are opened to the internet. Everything rides on Tailscale (WireGuard):
 
 ```text
 rules/             custom Wazuh rules (local_rules.xml)
+cloud/             always-on cloud server: VM launcher, base setup, hardened Wazuh, SSH lockdown, Tailscale policy
 server/            Docker + Wazuh setup, password hardening, rule loading, malware-defense config
 windows/           agent install, built-in Sysmon, VirusTotal key helper, one-click open shortcut
 malware-defense/   homelab-av scanner, installer, quarantine restore, end-to-end test
