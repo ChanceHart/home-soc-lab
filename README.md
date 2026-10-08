@@ -112,6 +112,7 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 | 5. Windows agent + Sysmon | PowerShell (admin) | `windows\install-agent.ps1`, then `windows\enable-sysmon.ps1`, restart Windows |
 | 6. Failed-logon auditing | PowerShell (admin) | `auditpol /set /subcategory:"Logon" /failure:enable` |
 | 7. Malware defense | PowerShell (admin) | `malware-defense\install-malware-defense.ps1`, then `bash server/enable-malware-defense.sh` |
+| 7b. Pop-ups | PowerShell (no admin) | `malware-defense\install-notifier.ps1` (Windows notification when a file is quarantined or an IP blocked; restarts itself if it ever stops) |
 | 8. VirusTotal (optional) | PowerShell | `windows\save-virustotal-key.ps1`, then rerun `server/enable-malware-defense.sh` |
 | 9. Prove it | PowerShell | scripts in `tests\` and `malware-defense\test-quarantine-loop.ps1`; watch https://localhost |
 | 10. One-click open | PowerShell | `windows\install-shortcut.ps1` (no admin) |
