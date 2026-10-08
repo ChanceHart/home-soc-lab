@@ -5,6 +5,7 @@
   .\open-homelab.ps1                                    # local lab in WSL (default)
   .\open-homelab.ps1 -CopyPassword                      # also put the dashboard admin password on the clipboard for 45 s
   .\open-homelab.ps1 -Remote -Url https://home-lab-cloud.your-tailnet.ts.net   # cloud/remote lab over Tailscale
+  .\open-homelab.ps1 -Remote -Url https://... -CopyPassword -Ssh ubuntu@100.x.y.z -SshKey ~\.ssh\my_key   # fetch the password over SSH
 .NOTES
   install-shortcut.ps1 creates a Desktop + Start menu shortcut with the same options.
 #>
@@ -13,6 +14,8 @@ param(
   [string]$Distro = 'Ubuntu-24.04',
   [switch]$Remote,
   [switch]$CopyPassword,
+  [string]$Ssh,       # remote lab: user@host to read the password from (over Tailscale)
+  [string]$SshKey,    # remote lab: private key for that SSH login
   [int]$TimeoutSec = 300
 )
 $ErrorActionPreference = 'Stop'
@@ -59,10 +62,17 @@ Start-Process $Url
 Write-Host 'Opened in your browser. A certificate warning is normal (the lab uses its own certificate): choose Advanced > Continue.'
 
 if ($CopyPassword) {
-  if ($Remote) {
-    Write-Host 'The password for a remote lab lives on that server (/root/lab-credentials.txt).'
+  $read = "sed -n 's/^password: //p' /root/lab-credentials.txt"
+  if ($Remote -and -not $Ssh) {
+    Write-Host 'The password for a remote lab lives on that server (/root/lab-credentials.txt). Add -Ssh user@host to fetch it.'
   } else {
-    $pw = (wsl.exe -d $Distro -u root -- sed -n 's/^password: //p' /root/lab-credentials.txt | Select-Object -First 1)
+    if ($Remote) {
+      $sshArgs = @('-o', 'BatchMode=yes', '-o', 'ConnectTimeout=10')
+      if ($SshKey) { $sshArgs += @('-i', $SshKey) }
+      $pw = (& ssh.exe @sshArgs $Ssh "sudo $read" | Select-Object -First 1)
+    } else {
+      $pw = (wsl.exe -d $Distro -u root -- sed -n 's/^password: //p' /root/lab-credentials.txt | Select-Object -First 1)
+    }
     if ($pw) {
       Set-Clipboard -Value $pw.Trim()
       Write-Host 'Admin password copied (user: admin). Clipboard is cleared in 45 seconds...'

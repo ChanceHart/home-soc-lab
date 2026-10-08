@@ -96,6 +96,20 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 | 9. Prove it | PowerShell | scripts in `tests\` and `malware-defense\test-quarantine-loop.ps1`; watch https://localhost |
 | 10. One-click open | PowerShell | `windows\install-shortcut.ps1` (no admin) |
 
+### Always-on cloud version (Oracle Cloud Always Free, $0)
+
+The same lab runs 24/7 on an Oracle Cloud Ampere A1 VM (4 Arm CPUs, 24 GB RAM). The Windows PC stays the monitored endpoint and talks to the server only over Tailscale.
+
+| Step | Where | Command |
+|---|---|---|
+| 1. VM + network (retries until Oracle has capacity) | PC with `~/.oci/config` | `python cloud/launch_vm.py --fallback-after 1` (see the script header) |
+| 2. Base: patches, auto-updates, Tailscale, firewall | VM (root) | `bash cloud/01-base.sh`, then `tailscale up --advertise-exit-node --hostname=home-lab-cloud` |
+| 3. Hardened Wazuh + rules, threat intel, VirusTotal, local agent | VM (root, repo root) | `bash cloud/02-wazuh.sh` |
+| 4. Close public SSH | Oracle security list | remove the port 22 rule (SSH keeps working over Tailscale) |
+| 5. Move the Windows agent | PowerShell (admin) | `cloud\03-move-agent.ps1 -Manager <VM Tailscale IP>` |
+
+Hardening built in: **no ports open to the internet**; dashboard, API and indexer bound to `127.0.0.1` (dashboard reached via `tailscale serve`); a `DOCKER-USER` rule stops Docker from publishing agent ports on the public NIC; agent enrollment password; random admin/API passwords; unattended security updates; Oracle's idle-reclaim rule avoided (indexer heap sized to keep memory use above 20%).
+
 ### Open the lab any time
 
 `windows\install-shortcut.ps1` adds a **Home SOC Lab** shortcut to the Desktop and Start menu. Double-click it and it:
@@ -108,7 +122,7 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 |---|---|
 | Local lab in WSL (default) | `windows\install-shortcut.ps1` |
 | Different WSL distro | `windows\install-shortcut.ps1 -Distro Ubuntu-22.04` |
-| Cloud/remote lab over Tailscale | `windows\install-shortcut.ps1 -Remote -Url https://<server>.<tailnet>.ts.net -Name "Home SOC Lab (cloud)"` |
+| Cloud/remote lab over Tailscale | `windows\install-shortcut.ps1 -Remote -Url https://<server>.<tailnet>.ts.net -Ssh ubuntu@<server Tailscale IP> -SshKey <key>` |
 | Linux / macOS | `server/open-homelab.sh` (or `URL=https://<server>.<tailnet>.ts.net server/open-homelab.sh`) |
 
 On a phone, install Tailscale and bookmark the `https://<server>.<tailnet>.ts.net` address (served by `tailscale serve`, reachable only from your own devices).
@@ -134,7 +148,7 @@ assets/            banner and diagram (HTML sources in assets/source)
 
 ## Next
 
-- Move the server to a small cloud VM and enroll a Linux endpoint (SSH brute force, auditd)
+- Enroll a Linux endpoint with auditd (the cloud VM's own agent already reports SSH and sudo activity)
 - Active response that blocks an IP after a brute-force alert
 - Map coverage in the MITRE ATT&CK Navigator
 

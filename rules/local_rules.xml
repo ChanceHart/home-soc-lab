@@ -33,6 +33,15 @@
     <group>execution,powershell,</group>
   </rule>
 
+  <!-- 3b. When PowerShell launches the encoded PowerShell, Wazuh's built-in rule 92057 matches first and 100120 never
+       runs. Tag that case as a lab alert too, so the lab detection shows up either way. -->
+  <rule id="100121" level="12">
+    <if_sid>92057</if_sid>
+    <description>Lab: suspicious PowerShell (encoded command launched by PowerShell)</description>
+    <mitre><id>T1059.001</id><id>T1027</id></mitre>
+    <group>execution,powershell,</group>
+  </rule>
+
   <!-- 4. Persistence: scheduled task created from the command line (Sysmon Event 1) -->
   <rule id="100130" level="10">
     <if_group>sysmon_event1</if_group>

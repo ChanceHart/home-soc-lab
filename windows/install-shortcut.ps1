@@ -9,13 +9,17 @@ param(
   [string]$Name = 'Home SOC Lab',
   [string]$Url = 'https://localhost',
   [string]$Distro = 'Ubuntu-24.04',
-  [switch]$Remote
+  [switch]$Remote,
+  [string]$Ssh,
+  [string]$SshKey
 )
 $script = Join-Path $PSScriptRoot 'open-homelab.ps1'
 if (-not (Test-Path $script)) { throw "open-homelab.ps1 not found next to this script" }
 
 $arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$script`" -Url `"$Url`" -CopyPassword"
 if ($Remote) { $arguments += ' -Remote' } else { $arguments += " -Distro `"$Distro`"" }
+if ($Ssh) { $arguments += " -Ssh `"$Ssh`"" }
+if ($SshKey) { $arguments += " -SshKey `"$SshKey`"" }
 
 $shell = New-Object -ComObject WScript.Shell
 $folders = @([Environment]::GetFolderPath('Desktop'), (Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs'))

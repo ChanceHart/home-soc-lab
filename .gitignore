@@ -1,6 +1,9 @@
 # local run logs and secrets never belong in the repo
 *-log.txt
-*.log
 *.key
-lab-credentials.txt
+*.log
 *.yarc
+__pycache__/
+cloud/launch.log
+cloud/vm-info.json
+lab-credentials.txt
