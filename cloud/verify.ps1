@@ -63,7 +63,19 @@ if ($peer.DNSName) {
   else { Report FAIL 'dashboard (trusted certificate)' "HTTP $code at $url" 'on the server: sudo tailscale serve --bg https+insecure://localhost:443 (enable Serve in the Tailscale admin if asked)' }
 }
 
-# 4. Checks on the server itself (over SSH), including the server -> PC isolation test
+# 4. This PC (the monitored endpoint)
+foreach ($svc in @(@{ n = 'WazuhSvc'; d = 'Wazuh agent'; f = 'run windows\install-agent.ps1 (admin), or Start-Service WazuhSvc' },
+                   @{ n = 'Sysmon'; d = 'Sysmon'; f = 'run windows\enable-sysmon.ps1 (admin)' })) {
+  $s = Get-Service $svc.n, "$($svc.n)64" -ErrorAction SilentlyContinue | Select-Object -First 1
+  if ($s.Status -eq 'Running') { Report PASS "$($svc.d) on this PC" 'running' } else { Report FAIL "$($svc.d) on this PC" $(if ($s) { $s.Status } else { 'not installed' }) $svc.f }
+}
+$notifier = Get-CimInstance Win32_Process -Filter "Name='powershell.exe'" | Where-Object CommandLine -like '*notify.ps1*'
+$task = Get-ScheduledTask -TaskName 'Home SOC Notifications' -ErrorAction SilentlyContinue
+if ($notifier -and $task) { Report PASS 'pop-ups on this PC' 'notifier running, watchdog task on' }
+elseif ($task) { Report WARN 'pop-ups on this PC' 'not running right now (watchdog restarts it within 15 min)' 'Start-ScheduledTask "Home SOC Notifications"' }
+else { Report WARN 'pop-ups on this PC' 'not installed' 'run malware-defense\install-notifier.ps1 (no admin)' }
+
+# 5. Checks on the server itself (over SSH), including the server -> PC isolation test
 $remote = @'
 P(){ echo "PASS|$1|$2|"; }; W(){ echo "WARN|$1|$2|$3"; }; F(){ echo "FAIL|$1|$2|$3"; }
 n=$(docker ps --format '{{.Names}}' | grep -c 'single-node-wazuh')
