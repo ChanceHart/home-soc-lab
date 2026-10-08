@@ -101,7 +101,13 @@ if [ "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/)" != 302 ] &&
   echo "Cleared a stuck dashboard migration"
 fi
 
-# 9. Dashboard on the tailnet only: https://<this machine>.<tailnet>.ts.net
+# 9. Data minimization: alerts (user names, paths, command lines) are deleted after 90 days
+curl -sk -u "admin:$PW" -H 'Content-Type: application/json' -X PUT \
+  https://localhost:9200/_plugins/_ism/policies/homelab-retention -d '{"policy":{"description":"Home SOC Lab: delete alert and archive indices after 90 days","default_state":"hot","states":[{"name":"hot","actions":[],"transitions":[{"state_name":"delete","conditions":{"min_index_age":"90d"}}]},{"name":"delete","actions":[{"delete":{}}],"transitions":[]}],"ism_template":[{"index_patterns":["wazuh-alerts-*","wazuh-archives-*"],"priority":100}]}}' >/dev/null
+curl -sk -u "admin:$PW" -H 'Content-Type: application/json' -X POST \
+  'https://localhost:9200/_plugins/_ism/add/wazuh-alerts-*' -d '{"policy_id":"homelab-retention"}' >/dev/null
+
+# 10. Dashboard on the tailnet only: https://<this machine>.<tailnet>.ts.net
 tailscale serve --bg https+insecure://localhost:443 || echo "Enable Serve in the Tailscale admin console, then rerun: tailscale serve --bg https+insecure://localhost:443"
 
 echo "Done. Check: docker compose -f $D/docker-compose.yml ps ; ss -tlnp ; tailscale serve status"
