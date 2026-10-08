@@ -92,6 +92,8 @@ Threat feeds refresh every morning (`server/update-threat-intel.sh` via cron). `
 | Open to the internet | Nothing (localhost only) | Nothing (Tailscale only, zero public ports) |
 | Phone access / personal VPN | While the PC is on | Always |
 
+**If anything goes wrong:** [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) lists every problem hit while building this (Oracle capacity, API key errors, a stuck dashboard, Tailscale policy not saving...) with the fix. The cloud setup takes about 1-2 hours of your time, plus however long Oracle takes to free up a VM.
+
 **Before you start (safety):**
 
 - Only run this on computers you own. Everything in `tests\` is a harmless simulation (made-up logons, a text file with a test marker, a temporary *disabled* user).
@@ -121,13 +123,15 @@ The Wazuh server runs 24/7 on an Oracle Cloud Ampere A1 VM (4 Arm CPUs, 24 GB RA
 | Step | Where | Command |
 |---|---|---|
 | 1. Accounts | browser | Oracle Cloud Free Tier (Pay As You Go upgrade gets capacity much faster and still costs $0 inside the free limits; set a $1 budget alert), Tailscale (free) |
-| 2. VM + network | your PC, with an [OCI API key](https://docs.oracle.com/en-us/iaas/Content/API/Concepts/apisigningkey.htm) in `~/.oci/config` | `python cloud/launch_vm.py --fallback-after 1` (retries until Oracle has capacity; never launches twice) |
-| 3. Base setup | VM, as root | `bash cloud/01-base.sh`, then `tailscale up --advertise-exit-node --hostname=home-lab-cloud` |
-| 4. Hardened Wazuh | VM, as root, from the repo folder | put your VirusTotal key in `/root/virustotal.key` (optional), then `bash cloud/02-wazuh.sh` |
-| 5. Lock down SSH | VM, as root, **logged in over Tailscale** | `bash cloud/04-lockdown.sh`, then delete the port 22 rule in the Oracle security list |
-| 6. Tailscale access rules | Tailscale admin console | paste `cloud/tailscale-policy.example.hujson` (with your IPs): the server can never start connections to your devices |
-| 7. Windows endpoint | PowerShell (admin) | steps 5-8 of setup A with `install-agent.ps1 -Manager <server Tailscale IP>`, then `cloud\03-move-agent.ps1 -Manager <server Tailscale IP>` (asks for the enrollment password) |
-| 8. Prove it + one-click open | PowerShell | step 9 of setup A, then `windows\install-shortcut.ps1 -Remote -Url https://<server>.<tailnet>.ts.net` |
+| 2. Oracle API key (guided) | your PC | `pip install oci`, then `python cloud/setup_oci_key.py` (shows the exact clicks, checks what you paste) |
+| 3. VM + network | your PC | `python cloud/launch_vm.py --fallback-after 1` (keeps retrying until Oracle has capacity; can take minutes to hours; never launches twice) |
+| 4. Base setup | VM, as root | `bash cloud/01-base.sh`, then `tailscale up --advertise-exit-node --hostname=home-lab-cloud` |
+| 5. Hardened Wazuh | VM, as root, from the repo folder | put your VirusTotal key in `/root/virustotal.key` (optional), then `bash cloud/02-wazuh.sh` |
+| 6. Lock down SSH | VM, as root, **logged in over Tailscale** | `bash cloud/04-lockdown.sh`, then delete the port 22 rule in the Oracle security list |
+| 7. Tailscale settings | Tailscale admin console | Access controls: paste `cloud/tailscale-policy.example.hujson` with your IPs (check line 1 before Save). Machines > server: **Disable key expiry**, **Use as exit node** |
+| 8. Windows endpoint | PowerShell (admin) | steps 5-8 of setup A with `install-agent.ps1 -Manager <server Tailscale IP>`, then `cloud\03-move-agent.ps1 -Manager <server Tailscale IP>` (asks for the enrollment password) |
+| 9. Check everything | PowerShell | `.\cloud\verify.ps1 -Server <server Tailscale IP> -PublicIp <server public IP>`: every line PASS/WARN/FAIL with its fix |
+| 10. Prove it + one-click open | PowerShell | step 9 of setup A, then `windows\install-shortcut.ps1 -Remote -Url https://<server>.<tailnet>.ts.net` |
 
 **Hardening built in (pen-tested 2026-10-07):** zero ports open to the internet (full 65,535-port scan); dashboard, API and indexer bound to `127.0.0.1` (dashboard only via `tailscale serve`); a `DOCKER-USER` rule keeps Docker from publishing ports on the public network card and blocks containers from the cloud metadata service; agent enrollment password (rogue enrollment refused); random admin/API passwords; SSH keys-only, no root, no forwarding, Tailscale-only; config files with secrets root-only; alerts auto-deleted after 90 days (data minimization); unattended security updates; the server can't open connections to your devices (Tailscale policy); Oracle's idle-reclaim rule avoided (indexer heap keeps memory above 20%). Survives a reboot with everything coming back on its own.
 
@@ -160,7 +164,8 @@ No ports are opened to the internet. Everything rides on Tailscale (WireGuard):
 
 ```text
 rules/             custom Wazuh rules (local_rules.xml)
-cloud/             always-on cloud server: VM launcher, base setup, hardened Wazuh, SSH lockdown, Tailscale policy
+cloud/             always-on cloud server: key setup, VM launcher, base setup, hardened Wazuh, SSH lockdown, Tailscale policy, health check
+docs/              troubleshooting guide, screenshots
 server/            Docker + Wazuh setup, password hardening, rule loading, malware-defense config
 windows/           agent install, built-in Sysmon, VirusTotal key helper, one-click open shortcut
 malware-defense/   homelab-av scanner, installer, quarantine restore, end-to-end test
