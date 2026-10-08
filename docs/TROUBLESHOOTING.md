@@ -35,6 +35,7 @@ Every problem below actually happened while building this lab. Most are now hand
 | Policy save fails with a test error | The IPs in `hosts` don't match your devices | Fix the three IPs (`tailscale status` lists them). The tests exist so a wrong policy can't be saved. |
 | Server disappears from the tailnet months later | Device keys expire after 180 days by default | Tailscale admin > Machines > server > **...** > **Disable key expiry**. `verify.ps1` warns if it's still on. |
 | Phone can't select the server as an exit node | Exit nodes need approval | Machines > server > **...** > **Edit route settings** > **Use as exit node**. |
+| Phone loses all internet (Wi-Fi and cellular) when the VPN is on | The phone's Tailscale app isn't actually connected, so the exit-node tunnel never forms and traffic goes nowhere | Set Exit node to None (service returns), open the Tailscale app, sign in / switch it on until it says **Connected**, then pick the exit node again. On the server, `tailscale status` should show the phone as active, not offline. |
 | Saw two "home lab" machines | One is your PC, one is the cloud server | Expected. The PC is the monitored endpoint; the server is the SIEM. |
 
 ## Windows endpoint
